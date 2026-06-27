@@ -1,5 +1,5 @@
-import { db } from './db'
-import { subjects } from './schema'
+import { db } from '.';
+import { subjects } from './schema';
 
 await db.insert(subjects).values([
   { name: 'daisy', type: 'pet' },
