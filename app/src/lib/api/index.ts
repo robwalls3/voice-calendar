@@ -1,9 +1,8 @@
 import type { Entry } from '@/types/entry'
 
-const API_URL = 'http://localhost:3001'
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`/api${path}`, {
     headers: { 'Content-Type': 'application/json' },
     ...options
   })

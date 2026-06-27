@@ -1,6 +1,6 @@
 import { eq, like, desc } from 'drizzle-orm'
 import { db } from '../db'
-import { entries, subjects } from '../schema'
+import { entries, subjects } from './schema'
 
 export const entryFields = {
   id: entries.id,
