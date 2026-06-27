@@ -4,8 +4,6 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY!,
 });
 
-console.log("Created ai", process.env.GEMINI_API_KEY);
-
 type ParsedEntry = {
   subject: string
   event: string
