@@ -39,7 +39,11 @@ type Handler<T> = (
 export function routeHandler<T>(handler: Handler<T>, options?: { successStatus?: number, useApiKey?: boolean }) {
   return (req: NextRequest, ctx: any) => {
     return withApiErrors(async () => {
-      const body = await req.json();
+      let body;
+      try {
+        body = await req.json();
+      } catch (err) {
+      }
         console.log("Serving", handler.name, req.headers, body);
 
         if (!options?.useApiKey) {
