@@ -36,8 +36,7 @@ Guidelines:
 - event should be 2-5 lowercase words describing the primary event.
 - notes should contain any useful additional context that doesn't belong in event.
 - If the user mentions a specific date or time, use it.
-- Otherwise assume today's date.
-- If no time is given, use null.
+- Otherwise assume today's date and time.
 - Resolve relative dates and times such as "today", "yesterday", "this morning", "last night", or "tomorrow" using the current date and time below.
 
 Current date: ${currentDate}

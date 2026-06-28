@@ -5,5 +5,9 @@ export class ApiError extends Error {
   ) {
     super(message);
     this.name = "ApiError";
+
+    console.error(`[ApiError ${status}] ${message}`, {
+      stack: this.stack,
+    });
   }
 }

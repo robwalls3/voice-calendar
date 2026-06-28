@@ -1,5 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ApiError } from "./errors";
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 export async function withApiErrors<T>(
   fn: () => Promise<T>,
@@ -25,5 +27,24 @@ export async function withApiErrors<T>(
       { error: "Internal server error" },
       { status: 500 }
     );
+  }
+}
+
+type Handler<T> = (
+  req: NextRequest,
+  ctx: any
+) => Promise<T> | T
+
+export function routeHandler<T>(handler: Handler<T>, options?: { successStatus?: number }) {
+  return (req: NextRequest, ctx: any) => {
+    return withApiErrors(async () => {
+      const session = await getServerSession(authOptions)
+
+      if (!session) {
+        throw new ApiError(401, "Unauthorized")
+      }
+
+      return handler(req, ctx)
+    }, options?.successStatus)
   }
 }
