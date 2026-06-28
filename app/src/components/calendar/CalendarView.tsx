@@ -13,7 +13,12 @@ export default function CalendarView() {
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ['entries', month],
-    queryFn: () => getEntriesByMonth(month)
+    queryFn: () => getEntriesByMonth(month),
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 1,
   })
 
   const monthStart = startOfMonth(currentDate)

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ApiError } from "./errors";
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { requireApiKey } from "../authKey";
 
 export async function withApiErrors<T>(
   fn: () => Promise<T>,
@@ -35,16 +36,24 @@ type Handler<T> = (
   ctx: any
 ) => Promise<T> | T
 
-export function routeHandler<T>(handler: Handler<T>, options?: { successStatus?: number }) {
+export function routeHandler<T>(handler: Handler<T>, options?: { successStatus?: number, useApiKey?: boolean }) {
   return (req: NextRequest, ctx: any) => {
     return withApiErrors(async () => {
-      const session = await getServerSession(authOptions)
+        console.log("useApiKey =", options?.useApiKey)
+        console.log("auth header =", req.headers.get("authorization"))
 
-      if (!session) {
-        throw new ApiError(401, "Unauthorized")
-      }
+        if (!options?.useApiKey) {
+            const session = await getServerSession(authOptions)
+    
+            if (!session) {
+            throw new ApiError(401, "Unauthorized")
+            }
+        } else {
+            requireApiKey(req)
+        }
 
       return handler(req, ctx)
     }, options?.successStatus)
   }
 }
+
