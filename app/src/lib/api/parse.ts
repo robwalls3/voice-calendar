@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { entries, subjects } from "@/lib/db/schema";
+import { entries, Subject, subjects } from "@/lib/db/schema";
 import { getEntryById } from "@/lib/db/queries";
 import { parseWithGemini } from "@/lib/gemini";
 import { ApiError } from "./errors";
@@ -17,39 +17,26 @@ export async function parseAndSave(text: string) {
     throw new ApiError(400, "text is required");
   }
 
-  let parsed;
+  const allSubjects = await db.select().from(subjects);
 
-  try {
-    parsed = await parseWithGemini(text);
-  } catch (err) {
-    console.error("Gemini failed, using fallback", err);
-    parsed = await fallbackParse(text);
-  }
+  // try {
+  //   parsed = await parseWithGemini(text);
+  // } catch (err) {
+  //   console.error("Gemini failed, using fallback", err);
+  const parsed = await fallbackParse(text, allSubjects);
+  // }
 
   if (!parsed?.subject || !parsed?.event || !parsed?.date) {
     throw new ApiError(422, "Could not extract required fields");
   }
 
-  const allSubjects = await db.select().from(subjects);
 
   const matchedSubject = allSubjects.find(s =>
     parsed.subject &&
     s.name.toLowerCase() === parsed.subject.toLowerCase()
   );
 
-  let subjectId: number;
-
-  if (matchedSubject) {
-    subjectId = matchedSubject.id;
-  } else {
-    const fallback = await db.select().from(subjects).limit(1);
-
-    if (!fallback.length) {
-      throw new ApiError(422, "No subjects available");
-    }
-
-    subjectId = fallback[0].id;
-  }
+  const subjectId = matchedSubject?.id || allSubjects[0].id;
 
   const inserted = await db
     .insert(entries)
@@ -63,22 +50,42 @@ export async function parseAndSave(text: string) {
     })
     .returning({ id: entries.id });
 
-  return await getEntryById(inserted[0].id);
+  return { ...inserted }
 }
 
-async function fallbackParse(text: string) {
+async function fallbackParse(text: string, allSubjects: Subject[]) {
   const lower = text.toLowerCase();
-  const allSubjects = await db.select().from(subjects);
 
   const matched = allSubjects.find(s =>
     lower.includes(s.name.toLowerCase())
   );
 
+  const { date, time } = (() => {
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Denver",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).formatToParts(now);
+
+    const get = (type: any) => parts.find(p => p.type === type)?.value;
+
+    return {
+      date: `${get("year")}-${get("month")}-${get("day")}`,
+      time: `${get("hour")}:${get("minute")}:${get("second")}`,
+    };
+  })();
+
   return {
     subject: matched?.name ?? "unknown",
     event: text,
-    date: new Date().toISOString().slice(0, 10),
-    time: null,
+    date,
+    time,
     notes: null,
   };
 }
