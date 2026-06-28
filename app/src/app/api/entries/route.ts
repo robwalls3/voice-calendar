@@ -8,9 +8,7 @@ import { NextRequest } from "next/server";
 
 export const GET = routeHandler(async () => getEntries());
 
-export const POST = routeHandler(async (req: NextRequest) => {
-  const body = await req.json()
-
+export const POST = routeHandler(async (body) => {
   const newEntry = await db
     .insert(entries)
     .values({

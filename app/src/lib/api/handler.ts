@@ -32,15 +32,15 @@ export async function withApiErrors<T>(
 }
 
 type Handler<T> = (
-  req: NextRequest,
+  body: any,
   ctx: any
 ) => Promise<T> | T
 
 export function routeHandler<T>(handler: Handler<T>, options?: { successStatus?: number, useApiKey?: boolean }) {
   return (req: NextRequest, ctx: any) => {
     return withApiErrors(async () => {
-        console.log("useApiKey =", options?.useApiKey)
-        console.log("auth header =", req.headers.get("authorization"))
+      const body = await req.json();
+        console.log("Serving", handler.name, req.headers, body);
 
         if (!options?.useApiKey) {
             const session = await getServerSession(authOptions)
@@ -52,7 +52,7 @@ export function routeHandler<T>(handler: Handler<T>, options?: { successStatus?:
             requireApiKey(req)
         }
 
-      return handler(req, ctx)
+      return handler(body, ctx)
     }, options?.successStatus)
   }
 }
